@@ -85,16 +85,16 @@ def run_and_submit_all( profile: gr.OAuthProfile | None):
         print("Question is ", item)
         task_id = item.get("task_id")
         question_text = item.get("question")
-        file = {}
-        if not task_id or question_text is None:
-            print(f"Skipping item with missing task_id or question: {item}")
-            continue
-        if item.get("file_name") != "":
-            file = get_task_file(item.get("task_id"))
-            print(file)
+        # file = {}
+        # if not task_id or question_text is None:
+        #     print(f"Skipping item with missing task_id or question: {item}")
+        #     continue
+        # if item.get("file_name") != "":
+        #     file = get_task_file(item.get("task_id"))
+        #     print(file)
         try:
             submitted_answer = agent(question_text)
-            answers_payload.append({"task_id": task_id,, "question", question_text, "submitted_answer": submitted_answer})
+            answers_payload.append({"task_id": task_id, "question": question_text, "submitted_answer": submitted_answer})
             results_log.append({"Task ID": task_id, "Question": question_text, "Submitted Answer": submitted_answer})
         except Exception as e:
              print(f"Error running agent on task {task_id}: {e}")
@@ -104,9 +104,10 @@ def run_and_submit_all( profile: gr.OAuthProfile | None):
         print("Agent did not produce any answers to submit.")
         return "Agent did not produce any answers to submit.", pd.DataFrame(results_log)
     
+    print("Final answer length is ", len(answers_payload))
     with open("output.txt", "w") as file:
-        for item in answers_payload:
-            json.dump(answers_payload, file, indent=4)
+        # for item in answers_payload:
+        json.dump(answers_payload, file, indent=4)
 
     # # 4. Prepare Submission 
     # submission_data = {"username": username.strip(), "agent_code": agent_code, "answers": answers_payload}

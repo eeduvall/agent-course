@@ -3,3 +3,4 @@ venv/
 .env
 .gitattributes
 test.py
+output.txt

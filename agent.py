@@ -36,12 +36,12 @@ class BasicAgent:
                      "If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. " \
                      "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string."
 
-        print("\n--- Agent Initialized With PROMPT---")
-        print(self.system_prompt)
-        print("\n--- END Agent Initialized With PROMPT---")
+        # print("\n--- Agent Initialized With PROMPT---")
+        # print(self.system_prompt)
+        # print("\n--- END Agent Initialized With PROMPT---")
 
     def __call__(self, question: str) -> dict:
-        print(f"Agent received question: {question}")
+        # print(f"Agent received question: {question}")
 
         # AgentState definition remains the same
         class AgentState(TypedDict):
@@ -49,8 +49,8 @@ class BasicAgent:
 
         # --- Modified Assistant Node ---
         def assistant_node(state: AgentState):
-            print("\n--- Calling Assistant Node (using AWS Bedrock Llama 405B) ---")
-            print("Messages going IN:", state["messages"])
+            # print("\n--- Calling Assistant Node (using AWS Bedrock Llama 405B) ---")
+            # print("Messages going IN:", state["messages"])
 
             # Use the AWS Bedrock Llama 405B invocation function
             result = invoke_llm_manually(
@@ -88,14 +88,14 @@ class BasicAgent:
             SystemMessage(content=self.system_prompt),
             HumanMessage(content=question)
         ]
-        print("\n--- Invoking Agent ---")
+        # print("\n--- Invoking Agent ---")
         final_state = {}
         try:
             final_state = agent.invoke({"messages": initial_messages})
-            print("\n--- Agent Invocation Finished ---")
+            # print("\n--- Agent Invocation Finished ---")
             if "messages" in final_state and final_state["messages"]:
-                 print("Final Agent State Messages:", final_state["messages"])
-                 print("\nFinal Answer Message:", repr(final_state["messages"][-1]))
+                #  print("Final Agent State Messages:", final_state["messages"])
+                #  print("\nFinal Answer Message:", repr(final_state["messages"][-1]))
                  if final_state["messages"][-1].content:
                      print("\nFinal Answer Content:", final_state["messages"][-1].content)
                  else:
