@@ -98,7 +98,7 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
     # Convert to JSON string
     body = json.dumps(request_body)
     
-    print(f"Request body: {body}")
+    # print(f"Request body: {body}")
     
     # Make the API call
     response = client.invoke_model(
@@ -109,7 +109,7 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
     # Parse the response
     response_body = json.loads(response.get('body').read())
     
-    print(f"Response body: {response_body}")
+    # print(f"Response body: {response_body}")
     
     # Extract the generated text
     if "generation" in response_body:
@@ -147,13 +147,13 @@ def invoke_llm_manually(
             aws_session_token=aws_session_token
         )
         
-        print(f"--- Invoking AWS Bedrock Llama 405B model: {model_name} ---")
+        # print(f"--- Invoking AWS Bedrock Llama 405B model: {model_name} ---")
         
         # If tools are provided, log them but we'll handle them separately
-        if tools:
-            print(f"--- Note: {len(tools)} tools provided ---")
-            for tool in tools:
-                print(f"Tool: {tool.name} - {tool.description}")
+        # if tools:
+        #     print(f"--- Note: {len(tools)} tools provided ---")
+        #     for tool in tools:
+        #         print(f"Tool: {tool.name} - {tool.description}")
         
         # Make direct API call to Bedrock
         try:
