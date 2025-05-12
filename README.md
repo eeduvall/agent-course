@@ -13,3 +13,8 @@ hf_oauth_expiration_minutes: 480
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
+
+#Notes
+export REQUESTS_CA_BUNDLE="/Library/Application Support/Netskope/STAgent/data/netskope-cert-bundle.pem"
+export SSL_CERT_FILE="/Library/Application Support/Netskope/STAgent/data/netskope-cert-bundle.pem"

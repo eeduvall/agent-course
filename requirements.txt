@@ -1,2 +1,11 @@
+duckduckgo-search
 gradio
+gradio[oauth]
+IPython
+langchain_community
+langchain_core
+langgraph
+pyppeteer
 requests
+boto3
+langchain-aws>=0.1.4
