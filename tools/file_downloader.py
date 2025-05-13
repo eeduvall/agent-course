@@ -1,35 +1,20 @@
 import requests
 import os
 import json
+import pandas as pd
 from enum import Enum
 from typing import Dict, Any, Union, Optional
-from tools.utils.file_downloader import download_task_file
+from tools.utils.file_api_handler import download_task_file
+from langchain.tools import Tool
 
 class FileType(Enum):
     TEXT = "text"
     JSON = "json"
     PYTHON = "python"
     CSV = "csv"
+    EXCEL = "excel"
     BINARY = "binary"
-
-def determine_file_type_from_content_type(content_type: str) -> FileType:
-    """Determine the file type based on the content-type header."""
-    if content_type.startswith('text/plain'):
-        return FileType.TEXT
-    elif content_type.startswith('application/json'):
-        return FileType.JSON
-    elif content_type.startswith('text/csv'):
-        return FileType.CSV
-    elif content_type.startswith('text/x-python') or content_type.startswith('application/x-python'):
-        return FileType.PYTHON
-    elif content_type.startswith('text/'):
-        # Other text formats default to TEXT
-        return FileType.TEXT
-    else:
-        # Non-text formats default to BINARY
-        print(f"Unknown content type: {content_type}")
-        return FileType.BINARY
-
+    PNG = "png"
 
 def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-scoring.hf.space") -> Dict[str, Any]:
     """Download a file associated with a task and return its contents in a format based on file type.
@@ -40,17 +25,37 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
         
     Returns:
         A dictionary containing:
-        - file_type: The type of the file (text, json, python, csv, binary)
+        - file_type: The type of the file (text, json, python, csv, excel, binary)
         - content: The content of the file, formatted according to its type
         - content_type: The content-type of the file
+        - filename: The original filename of the downloaded file
     """
     
     try:
-        # Get file content and content-type from download_task_file
-        file_content, content_type = download_task_file(task_id)
+        # Get filename and file content from download_task_file
+        filename, file_content = download_task_file(task_id)
         
-        # Determine file type from content-type header
-        file_type = determine_file_type_from_content_type(content_type)
+        # Determine file type from filename extension
+        file_extension = os.path.splitext(filename)[1].lower() if filename else ''
+        
+        if file_extension in ['.json']:
+            file_type = FileType.JSON
+        elif file_extension in ['.py', '.python']:
+            file_type = FileType.PYTHON
+        elif file_extension in ['.csv']:
+            file_type = FileType.CSV
+        elif file_extension in ['.xlsx', '.xls']:
+            file_type = FileType.EXCEL
+        elif file_extension in ['.txt', '.md', '.text']:
+            file_type = FileType.TEXT
+        elif file_extension in ['.png']:
+            file_type = FileType.PNG
+        else:
+            # Default to binary for unknown extensions
+            file_type = FileType.BINARY
+            
+        # For content type in the return value
+        content_type = f"application/octet-stream"  # Default content type
         
         # Process content based on file type
         if file_type == FileType.JSON:
@@ -58,6 +63,17 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
                 content = json.loads(file_content.decode('utf-8'))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 # If decoding as JSON fails, treat as binary
+                content = file_content
+                file_type = FileType.BINARY
+        elif file_type == FileType.EXCEL:
+            # For Excel files, use pandas to read the data
+            try:
+                import io
+                excel_file = io.BytesIO(file_content)
+                content = pd.read_excel(excel_file)
+            except Exception as e:
+                print(f"Error parsing Excel file: {e}")
+                # If parsing as Excel fails, treat as binary
                 content = file_content
                 file_type = FileType.BINARY
         elif file_type in [FileType.PYTHON, FileType.TEXT, FileType.CSV]:
@@ -74,7 +90,7 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
         return {
             "file_type": file_type.value,
             "content": content,
-            "content_type": content_type
+            "filename": filename
         }
         
     except requests.exceptions.RequestException as e:
@@ -100,12 +116,8 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
             "content_type": ""
         }
 
-
-# Create a tool that can be used with LangChain
-from langchain.tools import Tool
-
 file_downloader_tool = Tool(
     name="file_downloader",
     func=get_task_file,
-    description="Downloads a file associated with a task ID and returns its contents based on file type."
+    description="Downloads a file associated with a task ID and returns its contents based on file type (supports text, JSON, CSV, Excel, Python, and binary files). Excel files are automatically converted to pandas DataFrames."
 )

@@ -1,3 +1,4 @@
+import re
 import requests
 
 def download_task_file(task_id: str):
@@ -20,9 +21,11 @@ def download_task_file(task_id: str):
             response = requests.get(endpoint, stream=True)
             response.raise_for_status()  # Raise an exception for bad status codes
             content_type = response.headers.get('Content-Type', '').lower()
+            content_disposition = response.headers.get('content-disposition', '').lower()
+            filename = re.search(r'filename=[\\"\']?([^\\"\';]+)', content_disposition)
 
             # Return the raw content of the file as bytes
-            return (content_type, response.content)
+            return (filename.group(1), response.content)
 
         except requests.exceptions.RequestException as e:
             print(f"Error downloading file for task ID '{task_id}': {e}")

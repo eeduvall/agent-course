@@ -1,11 +1,15 @@
+board-to-fen
+boto3
 duckduckgo-search
 gradio
 gradio[oauth]
 IPython
+keras
+langchain-aws>=0.1.4
 langchain_community
 langchain_core
 langgraph
+pillow
 pyppeteer
 requests
-boto3
-langchain-aws>=0.1.4
+tensorflow
