@@ -9,7 +9,7 @@ from typing import TypedDict, Annotated, List, Dict, Any, Sequence
 
 from chat_agent.meta_agent import invoke_llm_manually
 
-from tools.file_downloader import get_task_file
+from tools.file_downloader import file_downloader_tool
 
 # --- Configuration ---
 AWS_REGION = "us-east-2"  # AWS region where Llama 405B is available
@@ -20,7 +20,7 @@ class BasicAgent:
     def __init__(self):
         print("BasicAgent initialized.")
         self.search_tool = DuckDuckGoSearchRun()
-        self.tools = [self.search_tool, get_task_file]
+        self.tools = [self.search_tool, file_downloader_tool]
         # self.system_prompt = """You are a helpful AI assistant using the AWS Bedrock Llama 405B model. You follow the ReAct (Reasoning and Acting) approach to solve problems step by step.
         
         # When you need information, you can use the available tools. For each step:
