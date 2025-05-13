@@ -11,7 +11,7 @@ from chat_agent.meta_agent import invoke_llm_manually
 
 from tools.file_downloader import file_downloader_tool
 from tools.board_to_fen import board_to_fen_tool
-# from tools.transcribe_audio import transcribe_audio_tool
+from tools.transcribe_audio import transcribe_audio_tool
 
 # --- Configuration ---
 AWS_REGION = "us-east-2"  # AWS region where Llama 405B is available
@@ -22,7 +22,7 @@ class BasicAgent:
     def __init__(self):
         print("BasicAgent initialized.")
         self.search_tool = DuckDuckGoSearchRun()
-        self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool]
+        self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool, transcribe_audio_tool]
         # self.system_prompt = """You are a helpful AI assistant using the AWS Bedrock Llama 405B model. You follow the ReAct (Reasoning and Acting) approach to solve problems step by step.
         
         # When you need information, you can use the available tools. For each step:
@@ -40,6 +40,7 @@ class BasicAgent:
                      "If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. " \
                      "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string. " \
                      "IMPORTANT: When using the file_downloader tool, you MUST use the task_id that is provided in the question. DO NOT make up or guess a task_id." \
+                     "Do NOT use the file_downloader tool for large return types such as images, audio, or video." \
                      "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is uknown."
                     #  "When a question mentions any file or external resource, always use the file_downloader tool first before using other specialized tools. " \
 

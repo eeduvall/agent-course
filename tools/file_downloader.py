@@ -17,6 +17,7 @@ class FileType(Enum):
     EXCEL = "excel"
     BINARY = "binary"
     PNG = "png"
+    MP3 = "mp3"
 
 def get_task_file(task_id: str) -> Dict[str, Any]:
     """Download a file associated with a task and return its contents in a format based on file type.
@@ -78,6 +79,8 @@ def get_task_file(task_id: str) -> Dict[str, Any]:
                 file_type = FileType.BINARY
         elif file_type == FileType.PNG:
             content = Image.open(io.BytesIO(file_content))
+        elif file_type == FileType.MP3:
+            content = file_content
         elif file_type in [FileType.PYTHON, FileType.TEXT, FileType.CSV]:
             # For text-based files, return the string representation
             try:
@@ -86,8 +89,8 @@ def get_task_file(task_id: str) -> Dict[str, Any]:
                 # If decoding as text fails, treat as binary
                 content = file_content
                 file_type = FileType.BINARY
-        else:  # Binary
-            content = file_content
+        else:
+            content = "This type of file format is not supported."
             
         return {
             "file_type": file_type.value,
@@ -121,6 +124,6 @@ def get_task_file(task_id: str) -> Dict[str, Any]:
 file_downloader_tool = Tool(
     name="file_downloader",
     func=get_task_file,
-    description="Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id."
+    description="Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id. Works for files of type: text, json, python, csv, excel."
     # ALWAYS USE THIS TOOL FIRST when a question mentions any file or external resource. 
 )

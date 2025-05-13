@@ -9,7 +9,10 @@ langchain-aws>=0.1.4
 langchain_community
 langchain_core
 langgraph
+numpy
 pillow
+pydub
 pyppeteer
 requests
 tensorflow
+vosk
