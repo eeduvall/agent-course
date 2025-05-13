@@ -1,6 +1,6 @@
 import requests
 
-def get_task_file(task_id: str):
+def download_task_file(task_id: str):
         """
         Downloads the file for the given task ID.
 
@@ -15,6 +15,7 @@ def get_task_file(task_id: str):
             requests.exceptions.RequestException: If there's an issue with the HTTP request.
         """
         endpoint = f"https://agents-course-unit4-scoring.hf.space/files/{task_id}"
+        
         try:
             response = requests.get(endpoint, stream=True)
             response.raise_for_status()  # Raise an exception for bad status codes
