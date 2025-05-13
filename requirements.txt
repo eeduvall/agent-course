@@ -4,7 +4,7 @@ duckduckgo-search
 gradio
 gradio[oauth]
 IPython
-keras
+keras==2.15.0
 langchain-aws>=0.1.4
 langchain_community
 langchain_core

@@ -1,9 +1,10 @@
 import requests
 import os
 import json
+import io
 import pandas as pd
 from enum import Enum
-from typing import Dict, Any, Union, Optional
+from typing import Dict, Any
 from tools.utils.file_api_handler import download_task_file
 from langchain.tools import Tool
 from PIL import Image
@@ -17,12 +18,11 @@ class FileType(Enum):
     BINARY = "binary"
     PNG = "png"
 
-def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-scoring.hf.space") -> Dict[str, Any]:
+def get_task_file(task_id: str) -> Dict[str, Any]:
     """Download a file associated with a task and return its contents in a format based on file type.
     
     Args:
         task_id: The ID of the task to download the file for
-        base_url: The base URL of the API
         
     Returns:
         A dictionary containing:
@@ -69,7 +69,6 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
         elif file_type == FileType.EXCEL:
             # For Excel files, use pandas to read the data
             try:
-                import io
                 excel_file = io.BytesIO(file_content)
                 content = pd.read_excel(excel_file)
             except Exception as e:
@@ -122,5 +121,6 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
 file_downloader_tool = Tool(
     name="file_downloader",
     func=get_task_file,
-    description="ALWAYS USE THIS TOOL FIRST when a question mentions any file or external resource. Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id."
+    description="Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id."
+    # ALWAYS USE THIS TOOL FIRST when a question mentions any file or external resource. 
 )

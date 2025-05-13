@@ -255,8 +255,6 @@ def invoke_llm_manually(
                             for i, call in enumerate(tool_calls)
                         ]
                     )
-            # Add this debug print
-            print(f"Tool calls extracted: {tool_calls}")
             
             # If no tool calls, return a regular AIMessage
             return AIMessage(content=response_text)
