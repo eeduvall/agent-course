@@ -38,13 +38,16 @@ class BasicAgent:
                      "YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma-separated list of numbers and/or strings. " \
                      "If you are asked for a number, don't use a comma to write your number neither use units such as $ or percent sign unless specified otherwise. " \
                      "If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. " \
-                     "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string."
+                     "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string. " \
+                     "IMPORTANT: When using the file_downloader tool, you MUST use the task_id that is provided in the question. DO NOT make up or guess a task_id." \
+                     "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is uknown."
+                    #  "When a question mentions any file or external resource, always use the file_downloader tool first before using other specialized tools. " \
 
         # print("\n--- Agent Initialized With PROMPT---")
         # print(self.system_prompt)
         # print("\n--- END Agent Initialized With PROMPT---")
 
-    def __call__(self, question: str) -> dict:
+    def __call__(self, question: str, task_id: str = None) -> dict:
         # print(f"Agent received question: {question}")
 
         # AgentState definition remains the same
@@ -87,7 +90,12 @@ class BasicAgent:
         builder.add_edge("tools", "assistant")
         agent = builder.compile()
 
-        # --- Invocation (remains the same) ---
+        # --- Invocation with task_id if provided ---
+        if task_id:
+            # Add the task_id to the question to make it explicit
+            enhanced_question = f"{question}\n\nIMPORTANT: The task_id for this question is '{task_id}'. Use this exact task_id with the file_downloader tool."
+            question = enhanced_question
+            
         initial_messages = [
             SystemMessage(content=self.system_prompt),
             HumanMessage(content=question)
