@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Dict, Any, Union, Optional
 from tools.utils.file_api_handler import download_task_file
 from langchain.tools import Tool
+from PIL import Image
 
 class FileType(Enum):
     TEXT = "text"
@@ -76,6 +77,8 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
                 # If parsing as Excel fails, treat as binary
                 content = file_content
                 file_type = FileType.BINARY
+        elif file_type == FileType.PNG:
+            content = Image.open(io.BytesIO(file_content))
         elif file_type in [FileType.PYTHON, FileType.TEXT, FileType.CSV]:
             # For text-based files, return the string representation
             try:
