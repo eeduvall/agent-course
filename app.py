@@ -5,7 +5,7 @@ import inspect
 import json
 import pandas as pd
 from agent import BasicAgent
-from file_downloader import get_task_file
+from tools.file_downloader import get_task_file
 
 # (Keep Constants as is)
 # --- Constants ---
