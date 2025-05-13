@@ -228,7 +228,7 @@ def invoke_llm_manually(
                 for match in tool_call_matches:
                     # Parse the tool call (this is a simplified example)
                     # You might need to adjust this based on your model's output format
-                    tool_name_match = re.search(r'name=["\'](.*?)["\']', match)
+                    tool_name_match = re.search(r'name=(.*?)\n', match)
                     tool_args_match = re.search(r'args=(\{.*?\})', match, re.DOTALL)
                     
                     if tool_name_match and tool_args_match:
@@ -255,6 +255,8 @@ def invoke_llm_manually(
                             for i, call in enumerate(tool_calls)
                         ]
                     )
+            # Add this debug print
+            print(f"Tool calls extracted: {tool_calls}")
             
             # If no tool calls, return a regular AIMessage
             return AIMessage(content=response_text)
