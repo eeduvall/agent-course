@@ -10,5 +10,5 @@ def board_to_fen(img: ImageFile):
 board_to_fen_tool = Tool(
     name="board_to_fen",
     func=board_to_fen,
-    description="Converts a chessboard image to a FEN string."
+    description="Converts a chessboard image to a FEN string. Use after downloading the image with file_downloader."
 )
