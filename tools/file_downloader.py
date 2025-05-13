@@ -122,5 +122,5 @@ def get_task_file(task_id: str, base_url: str = "https://agents-course-unit4-sco
 file_downloader_tool = Tool(
     name="file_downloader",
     func=get_task_file,
-    description="Downloads a file associated with a task ID and returns its contents based on file type (supports text, JSON, CSV, Excel, Python, and binary files). Excel files are automatically converted to pandas DataFrames."
+    description="ALWAYS USE THIS TOOL FIRST when a question mentions any file or external resource. Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id."
 )
