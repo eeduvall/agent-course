@@ -14,7 +14,7 @@ numpy
 pillow
 pydub
 pyppeteer
-pytube
 requests
 tensorflow
 vosk
+yt-dlp
