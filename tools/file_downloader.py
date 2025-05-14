@@ -124,6 +124,6 @@ def get_task_file(task_id: str) -> Dict[str, Any]:
 file_downloader_tool = Tool(
     name="file_downloader",
     func=get_task_file,
-    description="Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id. Works for files of type: text, json, python, csv, excel."
+    description="Downloads a file associated with a task ID and returns its contents. IMPORTANT: You must use the exact task_id provided in the question (e.g., 'cca530fc-4052-43b2-b130-b30968d8aa44'). Do not make up or guess a task_id. Works for files of type: text, json, python, csv, excel. Do NOT use for audio or images."
     # ALWAYS USE THIS TOOL FIRST when a question mentions any file or external resource. 
 )

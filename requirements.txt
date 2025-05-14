@@ -1,6 +1,7 @@
 board-to-fen
 boto3
 duckduckgo-search
+ffmpeg-python
 gradio
 gradio[oauth]
 IPython
