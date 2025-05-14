@@ -5,17 +5,21 @@ from vosk import Model, KaldiRecognizer
 from pydub import AudioSegment
 from io import BytesIO
 from langchain.tools import Tool
-# Load your binary MP3 audio file
-def transcribe_audio(binary_audio):
+from tools.utils.file_api_handler import download_task_file
 
-    result = get_task_file(task_id)
-    
-    # Check if we got a valid image
-    if result.get('file_type') == 'mp3' and 'content' in result:
-        audio = result['content'] 
+def transcribe_audio(task_id):
+    """Transcribe an audio file directly from the task_id without using file_downloader tool."""
+    try:
+        # Get the file directly using download_task_file
+        filename, file_content = download_task_file(task_id)
+        
+        # Check if we got a valid audio file by extension
+        file_extension = filename.lower().split('.')[-1] if filename else ''
+        if file_extension != 'mp3':
+            return f"Error: File is not an MP3 audio file. File type: {file_extension}"
         
         # Convert MP3 binary data to WAV format
-        audio = AudioSegment.from_file(BytesIO(binary_audio), format="mp3")
+        audio = AudioSegment.from_file(BytesIO(file_content), format="mp3")
         audio = audio.set_channels(1).set_frame_rate(16000)
 
         # Save as WAV in memory
@@ -25,26 +29,21 @@ def transcribe_audio(binary_audio):
 
         # Load audio into Wave format
         with wave.open(buffer, 'rb') as wf:
-            model = Model("model")  # Ensure you've downloaded a Vosk model
+            model = Model("model/vosk-model-small-en-us-0.15")
             recognizer = KaldiRecognizer(model, wf.getframerate())
 
             results = []
-            while True:
-                data = wf.readframes(4000)
-                if len(data) == 0:
-                    break
+            while (data := wf.readframes(4000)):
                 if recognizer.AcceptWaveform(data):
                     result = json.loads(recognizer.Result())
                     results.append(result.get("text", ""))
-
-            with open("audio.txt", "w") as file:
-                file.write(" ".join(results))
-            return " ".join(results)
-    else:
-        return f"Error: Could not process image for task {task_id}. File type: {result.get('file_type')}. Stop processing immediately and report an error."
+            
+            return {"transcription": " ".join(results)}
+    except Exception as e:
+        return f"Error transcribing audio: {str(e)}"
 
 transcribe_audio_tool = Tool(
     name="Transcribe Audio",
     func=transcribe_audio,
-    description="Transcribe text from a audio file. Do NOT use the file_downloader tool before this one.",
+    description="Transcribe text from an audio file. Provide the task_id to analyze the audio. Do NOT use the file_downloader tool before this one.",
 )

@@ -4,3 +4,4 @@ venv/
 .gitattributes
 test.py
 output*.txt
+audio.txt
