@@ -142,19 +142,26 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
     
     # Convert to JSON string
     body = json.dumps(request_body)
-    
-    # print(f"Request body: {body}")
-    
-    # Make the API call
-    response = client.invoke_model(
-        modelId=model_id,
-        body=body
-    )
-    
-    # Parse the response
-    response_body = json.loads(response.get('body').read())
-    
-    # print(f"Response body: {response_body}")
+
+    success = False
+    attempts = 0
+
+    while not success and attempts < 2:
+        # Make the API call
+        response = client.invoke_model(
+            modelId=model_id,
+            body=body
+        )
+        
+        # Parse the response
+        response_body = json.loads(response.get('body').read())
+        
+        # Check if the response is valid
+        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            success = True
+        else:
+            print(f"Invalid response format: {response_body}")
+            attempts += 1
     
     # Extract the generated text
     if "generation" in response_body:
