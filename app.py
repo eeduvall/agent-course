@@ -5,7 +5,6 @@ import inspect
 import json
 import pandas as pd
 from agent import BasicAgent
-from tools.file_downloader import get_task_file
 
 # (Keep Constants as is)
 # --- Constants ---
@@ -72,6 +71,10 @@ def run_and_submit_all( profile: gr.OAuthProfile | None):
             json.dump(questions_data, json_file, indent=4)
 
     # 3. Run your Agent
+    completed_answers = []
+    if os.path.exists("output.txt"):
+        with open("output.txt", "r") as file:
+            completed_answers = json.load(file)
     results_log = []
     answers_payload = []
     print(f"Running agent on {len(questions_data)} questions...")
@@ -82,16 +85,12 @@ def run_and_submit_all( profile: gr.OAuthProfile | None):
         #     count = count + 1
         #     continue
         # count = count + 1
+        if item.get("task_id") in [answer["task_id"] for answer in completed_answers]:
+            print(f"Question {item['task_id']} already processed.")
+            continue
         print("Question is ", item)
         task_id = item.get("task_id")
         question_text = item.get("question")
-        # file = {}
-        # if not task_id or question_text is None:
-        #     print(f"Skipping item with missing task_id or question: {item}")
-        #     continue
-        # if item.get("file_name") != "":
-        #     file = get_task_file(item.get("task_id"))
-        #     print(file)
         try:
             submitted_answer = agent(question_text)
             answers_payload.append({"task_id": task_id, "question": question_text, "submitted_answer": submitted_answer})
