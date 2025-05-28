@@ -202,10 +202,10 @@ def invoke_llm_manually(
         print(f"--- Invoking AWS Bedrock Llama 405B model: {model_name} ---")
         
         # Log tools if provided
-        if tools:
-            print(f"--- Note: {len(tools)} tools provided ---")
-            for tool in tools:
-                print(f"Tool: {tool.name} - {tool.description}")
+        # if tools:
+        #     print(f"--- Note: {len(tools)} tools provided ---")
+        #     for tool in tools:
+        #         print(f"Tool: {tool.name} - {tool.description}")
         
         # Make direct API call to Bedrock with tools
         try:
@@ -220,7 +220,8 @@ def invoke_llm_manually(
             
             print(f"--- Received response from AWS Bedrock ---")
             print(f"Response: {response_text[:500]}...")  # Show more of the response for debugging
-            
+            print(f"--- End of received response from AWS Bedrock ---")
+
             # Check if the response contains tool calls
             if "<tool_call>" in response_text and "</tool_call>" in response_text:
                 # Extract tool call information

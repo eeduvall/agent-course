@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.messages import (
     AnyMessage, AIMessage, HumanMessage, SystemMessage, ToolMessage, BaseMessage
@@ -15,12 +18,13 @@ from tools.transcribe_audio import transcribe_audio_tool
 from tools.youtube import youtube_tool
 
 # --- Configuration ---
-AWS_REGION = "us-east-2"  # AWS region where Llama 405B is available
-LLAMA_MODEL_ID = "us.meta.llama3-1-405b-instruct-v1:0"  # Llama 405B model ID
+AWS_REGION = "us-east-2"
+LLAMA_MODEL_ID = "us.meta.llama3-1-405b-instruct-v1:0"
 
 # --- Agent Definition (Modified) ---
 class BasicAgent:
     def __init__(self):
+        load_dotenv()
         print("BasicAgent initialized.")
         self.search_tool = DuckDuckGoSearchRun()
         self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool, transcribe_audio_tool, youtube_tool]
@@ -68,7 +72,10 @@ class BasicAgent:
                 model_name=LLAMA_MODEL_ID,
                 temperature=0.2,
                 max_tokens=5000,
-                region_name=AWS_REGION
+                region_name=AWS_REGION,
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                aws_session_token=os.getenv("AWS_SESSION_TOKEN")
             )
 
             print("Assistant Node Result Type:", type(result))
@@ -104,6 +111,7 @@ class BasicAgent:
         ]
         # print("\n--- Invoking Agent ---")
         final_state = {}
+        answer = ""
         try:
             final_state = agent.invoke({"messages": initial_messages})
             # print("\n--- Agent Invocation Finished ---")
@@ -123,3 +131,4 @@ class BasicAgent:
             print(traceback.format_exc())
 
         return final_state["messages"][-1].content
+#FINAL ANSWER: [YOUR FINAL ANSWER].

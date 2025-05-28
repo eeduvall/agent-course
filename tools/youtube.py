@@ -86,5 +86,5 @@ def youtube_processor(url: str, task_id: str = None):
 youtube_tool = Tool(
     name="youtube_processor",
     func=youtube_processor,
-    description="Extract and transcribe the audio from a YouTube video. Provide the URL to analyze the YouTube link (e.g. https://www.youtube.com/watch?v=...). Use this tool when the quesiton calls for processing YouTube videos and urls."
+    description="Extract and transcribe the audio from a YouTube video. Provide the URL to analyze the YouTube link (e.g. https://www.youtube.com/watch?v=...). Use this tool when the question calls for processing YouTube videos and urls."
 )
