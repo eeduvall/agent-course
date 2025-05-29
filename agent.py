@@ -27,8 +27,7 @@ class BasicAgent:
         load_dotenv()
         print("BasicAgent initialized.")
         self.search_tool = DuckDuckGoSearchRun()
-        self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool, transcribe_audio_tool, youtube_tool]
-        # self.system_prompt = """You are a helpful AI assistant using the AWS Bedrock Llama 405B model. You follow the ReAct (Reasoning and Acting) approach to solve problems step by step.
+        # self.system_prompt = """You are a helpful AI assistant using the AWS Bedrock Llama model. You follow the ReAct (Reasoning and Acting) approach to solve problems step by step.
         
         # When you need information, you can use the available tools. For each step:
         # 1. Think about what you know and what you need to find out
@@ -38,23 +37,33 @@ class BasicAgent:
         
         # When you have a final answer, provide just the answer in as few words as possible and no other text.
         # """
-        self.system_prompt = "You are a general AI assistant. I will ask you a question. " \
+        self.system_prompt = ("You are a general AI assistant. I will ask you a question. " \
+                     "If you need external information, make the necessary tool calls first. " \
+                     "Do not provide a final answer until tool responses have been received. " \
                      "Report your thoughts, and finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER]. " \
                      "YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma-separated list of numbers and/or strings. " \
                      "If you are asked for a number, don't use a comma to write your number neither use units such as $ or percent sign unless specified otherwise. " \
                      "If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. " \
                      "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string. " \
-                     "IMPORTANT: When using the file_downloader tool, you MUST use the task_id that is provided in the question. DO NOT make up or guess a task_id." \
-                     "Do NOT use the file_downloader tool for large return types such as images, audio, or video." \
-                     "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is uknown."
+                     "IMPORTANT: When using the file_downloader tool, you MUST use the task_id that is provided in the question. DO NOT make up or guess a task_id. " \
+                     "Do NOT use the file_downloader tool for large return types such as images, audio, or video. " \
+                     "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is unknown.")
+                     
                     #  "When a question mentions any file or external resource, always use the file_downloader tool first before using other specialized tools. " \
 
         # print("\n--- Agent Initialized With PROMPT---")
         # print(self.system_prompt)
         # print("\n--- END Agent Initialized With PROMPT---")
 
-    def __call__(self, question: str, task_id: str = None) -> dict:
+    def __call__(self, question: str, task_id: str, file_name: str = '') -> dict:
         # print(f"Agent received question: {question}")
+
+        if file_name is not '':
+            print(f"File is present '{file_name}'")
+            self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool, transcribe_audio_tool, youtube_tool]
+        else:
+            print("File is NOT present")
+            self.tools = [self.search_tool, board_to_fen_tool, transcribe_audio_tool, youtube_tool]
 
         # AgentState definition remains the same
         class AgentState(TypedDict):
@@ -62,10 +71,10 @@ class BasicAgent:
 
         # --- Modified Assistant Node ---
         def assistant_node(state: AgentState):
-            # print("\n--- Calling Assistant Node (using AWS Bedrock Llama 405B) ---")
+            # print("\n--- Calling Assistant Node (using AWS Bedrock Llama) ---")
             # print("Messages going IN:", state["messages"])
 
-            # Use the AWS Bedrock Llama 405B invocation function
+            # Use the AWS Bedrock Llama invocation function
             result = invoke_llm_manually(
                 messages=state["messages"],
                 tools=self.tools,
@@ -102,7 +111,7 @@ class BasicAgent:
         # --- Invocation with task_id if provided ---
         if task_id:
             # Add the task_id to the question to make it explicit
-            enhanced_question = f"{question}\n\nIMPORTANT: The task_id for this question is '{task_id}'. Use this exact task_id with the file_downloader tool."
+            enhanced_question = f"{question}\n\nIMPORTANT: The task_id for this question is '{task_id}'."# Use this exact task_id with the file_downloader tool if necessary.
             question = enhanced_question
             
         initial_messages = [

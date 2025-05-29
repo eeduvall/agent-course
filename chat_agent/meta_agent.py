@@ -42,7 +42,15 @@ def get_bedrock_client(region_name="us-east-2",
     return session.client("bedrock-runtime", config=config)
 
 # --- Direct Bedrock API Call Function ---
-def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tokens=5000, tools=None):
+def invoke_bedrock_directly(client,
+                model_id,
+                messages,
+                temperature=0.2,
+                max_tokens=5000,
+                tools=None,
+                timeout=30,
+                max_retries=2,
+                max_tool_result_length=8000):
     """
     Makes a direct API call to AWS Bedrock without using the LangChain wrapper.
     
@@ -53,6 +61,9 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
         temperature: Temperature for generation
         max_tokens: Maximum number of tokens to generate
         tools: List of tools available for the model to use
+        timeout: Timeout in seconds for the API call
+        max_retries: Maximum number of retry attempts
+        max_tool_result_length: Maximum length for tool results to prevent context overflows
     """
     # Build the system prompt with tool descriptions
     system_parts = []
@@ -109,8 +120,18 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
             else:
                 conversation.append({"role": "assistant", "content": msg.content})
         elif isinstance(msg, ToolMessage):
-            # Format tool messages with the result
-            conversation.append({"role": "user", "content": f"<tool_result>\n{msg.content}\n</tool_result>"})
+            # Format tool messages with the result, truncating if necessary to prevent context overflow
+            tool_content = msg.content
+            
+            
+            # Check if this is a DuckDuckGo search result (which can be very large)
+            if "duckduckgo_search" in str(msg.tool_call_id).lower() or any("search" in str(t.name).lower() for t in tools if hasattr(t, 'name')):
+                print(f"Detected search tool result, original length: {len(tool_content)}")
+                if len(tool_content) > max_tool_result_length:
+                    # Truncate and add a note about truncation
+                    tool_content = tool_content[:max_tool_result_length] + "\n[Content truncated due to length]\n"
+                    print(f"Truncated search result to {len(tool_content)} characters")
+            conversation.append({"role": "user", "content": f"<tool_result>\n{tool_content}\n</tool_result>"})
     
     # Combine system parts with the conversation
     full_system_prompt = "\n\n".join(system_parts)
@@ -145,23 +166,59 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
 
     success = False
     attempts = 0
+    last_error = None
 
-    while not success and attempts < 2:
-        # Make the API call
-        response = client.invoke_model(
-            modelId=model_id,
-            body=body
-        )
-        
-        # Parse the response
-        response_body = json.loads(response.get('body').read())
-        
-        # Check if the response is valid
-        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            success = True
-        else:
-            print(f"Invalid response format: {response_body}")
+    # Configure the client with timeout
+    client_config = client._client_config
+    if hasattr(client_config, 'connect_timeout'):
+        original_timeout = client_config.connect_timeout
+        client_config.connect_timeout = timeout
+    
+    while not success and attempts < max_retries:
+        try:
+            print(f"Bedrock API call attempt {attempts+1}/{max_retries}")
+            # Make the API call with timeout configuration
+            response = client.invoke_model(
+                modelId=model_id,
+                body=body
+            )
+            
+            # Parse the response
+            response_body = json.loads(response.get('body').read())
+            
+            # Check if the response is valid
+            if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                success = True
+                print(f"Successful API call on attempt {attempts+1}")
+            else:
+                print(f"Invalid response format: {response_body}")
+                attempts += 1
+                # Exponential backoff
+                if attempts < max_retries:
+                    sleep_time = 2 ** attempts
+                    print(f"Retrying in {sleep_time} seconds...")
+                    import time
+                    time.sleep(sleep_time)
+        except Exception as e:
+            last_error = e
             attempts += 1
+            print(f"Error during Bedrock API call (attempt {attempts}/{max_retries}): {str(e)}")
+            # Exponential backoff
+            if attempts < max_retries:
+                sleep_time = 2 ** attempts
+                print(f"Retrying in {sleep_time} seconds...")
+                import time
+                time.sleep(sleep_time)
+    
+    # Restore original timeout if we modified it
+    if hasattr(client_config, 'connect_timeout'):
+        client_config.connect_timeout = original_timeout
+    
+    if not success:
+        if last_error:
+            raise last_error
+        else:
+            raise ValueError(f"Failed to get a successful response after {max_retries} attempts")
     
     # Extract the generated text
     if "generation" in response_body:
@@ -172,7 +229,7 @@ def invoke_bedrock_directly(client, model_id, messages, temperature=0.2, max_tok
         raise ValueError(f"Unexpected response format: {response_body}")
 
 
-# --- Custom LLM Invocation Function for AWS Bedrock Llama 405B ---
+# --- Custom LLM Invocation Function for AWS Bedrock Llama ---
 def invoke_llm_manually(
     messages: Sequence[BaseMessage],
     tools: Sequence[BaseTool] = None,
@@ -187,7 +244,7 @@ def invoke_llm_manually(
     aws_session_token: Optional[str] = None
 ) -> AIMessage:
     """
-    Invokes the AWS Bedrock Llama 405B model, handles the response, and constructs
+    Invokes the AWS Bedrock Llama model, handles the response, and constructs
     an AIMessage, supporting tool calls if provided.
     """
     try:
@@ -199,7 +256,7 @@ def invoke_llm_manually(
             aws_session_token=aws_session_token
         )
         
-        print(f"--- Invoking AWS Bedrock Llama 405B model: {model_name} ---")
+        print(f"--- Invoking AWS Bedrock Llama model: {model_name} ---")
         
         # Log tools if provided
         # if tools:
@@ -215,7 +272,10 @@ def invoke_llm_manually(
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                tools=tools
+                tools=tools,
+                timeout=60,
+                max_retries=3,
+                max_tool_result_length=8000
             )
             
             print(f"--- Received response from AWS Bedrock ---")

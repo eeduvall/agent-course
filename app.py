@@ -79,44 +79,26 @@ def run_and_submit_all( profile: gr.OAuthProfile | None):
     results_log = []
     answers_payload = []
     print(f"Running agent on {len(questions_data)} questions...")
-    # count_to_question = 2
-    # count = 0
     for item in questions_data:
-        # if count != 2:
-        #     print(f"incrementing count {count}")
-        #     count = count + 1
-        #     continue
-        # count = count + 1
-        # print (f"count is {count}")
-        # print(f"count to question is {count_to_question}")
-        if item.get("task_id") in [answer["task_id"] for answer in completed_answers]:
-            print(f"Question {item['task_id']} already processed.")
-            answers_payload.append({"task_id": answer["task_id"], "question": answer["question"], "submitted_answer": answer["submitted_answer"]})
-            continue
+
         print("Question is ", item)
         task_id = item.get("task_id")
         question_text = item.get("question")
+        file_name = item.get("file_name")
+        
         try:
-            submitted_answer = agent(question_text)
-            reg_results = re.search("FINAL ANSWER: (.+)\.", submitted_answer)
+            submitted_answer = agent(question_text, task_id, file_name)
+            reg_results = re.search(r"FINAL ANSWER: (.+)(?:\.)?", submitted_answer)
             parsed_answer = reg_results.group(1)
-            print(f"=================Submitted answer from agent is {parsed_answer}===================")
             answers_payload.append({"task_id": task_id, "question": question_text, "submitted_answer": parsed_answer})
             results_log.append({"Task ID": task_id, "Question": question_text, "Submitted Answer": parsed_answer})
         except Exception as e:
              print(f"Error running agent on task {task_id}: {e}")
              results_log.append({"Task ID": task_id, "Question": question_text, "Submitted Answer": f"AGENT ERROR: {e}"})
-        # if (count == count_to_question):
-        #     break
 
     if not answers_payload:
         print("Agent did not produce any answers to submit.")
         return "Agent did not produce any answers to submit.", pd.DataFrame(results_log)
-    
-    print("Final answer length is ", len(answers_payload))
-    # with open("output.txt", "w") as file:
-    #     # for item in answers_payload:
-    #     json.dump(answers_payload, file, indent=4)
 
     # 4. Prepare Submission 
     submission_data = {"username": username.strip(), "agent_code": agent_code, "answers": answers_payload}

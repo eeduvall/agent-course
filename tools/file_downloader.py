@@ -32,6 +32,14 @@ def get_task_file(task_id: str) -> Dict[str, Any]:
         - content_type: The content-type of the file
         - filename: The original filename of the downloaded file
     """
+
+    def is_valid_uuid(string):
+      pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+      return bool(re.match(pattern, string))
+
+    if is_valid_uuid(task_id) is False:
+        print("bad uuid")
+        return {"Failure:  The input task_id given to the function was not a valid task id. Please retry with the task_id for the question."}
     
     try:
         # Get filename and file content from download_task_file
