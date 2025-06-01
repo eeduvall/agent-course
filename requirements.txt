@@ -1,5 +1,6 @@
 board-to-fen
 boto3
+chess
 dotenv
 duckduckgo-search
 ffmpeg-python

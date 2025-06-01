@@ -1,3 +1,4 @@
+import re
 import json
 import boto3
 from botocore.config import Config
@@ -69,21 +70,11 @@ def invoke_bedrock_directly(client,
         max_tool_result_length: Maximum length for tool results to prevent context overflows
     """
     # Build the system prompt with tool descriptions
-    system_parts = []
-    system_message = None
-    
-    # Extract system message if present
-    for msg in messages:
-        if isinstance(msg, SystemMessage):
-            system_message = msg.content
-            break
-    
-    if system_message:
-        system_parts.append(system_message)
+    system_parts = ["You are a specialized AI assistant. Your primary objective is to accurately answer the provided question using ONLY the specialized tools available to you. You must operate in a step-by-step manner to ensure precision.\n\n"]
     
     # Add tool descriptions to system prompt if tools are provided
     if tools:
-        tools_section = ["\n\nAVAILABLE TOOLS:", "When you need to use a tool, use the following format:",
+        tools_section = ["AVAILABLE TOOLS:", "When you need to use a tool, use the following format:",
                         "<tool_call>", "name=<tool_name>", "args={\"arg1\": \"value1\", \"arg2\": \"value2\"}", "</tool_call>",
                         "The available tools are:"]
         
@@ -105,6 +96,17 @@ def invoke_bedrock_directly(client,
         
         system_parts.append("\n".join(tools_section))
     
+    system_message = None
+    
+    # Extract system message if present
+    for msg in messages:
+        if isinstance(msg, SystemMessage):
+            system_message = msg.content
+            break
+    
+    if system_message:
+        system_parts.append(system_message)
+
     # Build conversation in the format Llama expects
     conversation = []
     for msg in messages:
@@ -151,7 +153,10 @@ def invoke_bedrock_directly(client,
     prompt_parts.append("Assistant:")
     
     # Join all parts to form the final prompt
-    final_prompt = "\n\n".join(prompt_parts)
+    final_prompt = "\n\n".join(prompt_parts).strip()
+
+    # print(final_prompt)
+    # input("Continue?")
     
     # Prepare the request body for Llama model
     request_body = {
@@ -159,10 +164,6 @@ def invoke_bedrock_directly(client,
         "temperature": temperature,
         "max_gen_len": max_tokens
     }
-    
-    # The prompt is already fully constructed, no need to reformat it here
-    # Just ensure it's properly stripped
-    request_body["prompt"] = final_prompt.strip()
     
     # Convert to JSON string
     body = json.dumps(request_body)
@@ -267,6 +268,9 @@ def invoke_llm_manually(
         #         print(f"Tool: {tool.name} - {tool.description}")
         
         # Make direct API call to Bedrock with tools
+        # print('invoking llm with messages')
+        # print(messages)
+        # input("Continue?")
         try:
             response_text = invoke_bedrock_directly(
                 client=client,
@@ -281,13 +285,12 @@ def invoke_llm_manually(
             )
             
             print(f"--- Received response from AWS Bedrock ---")
-            print(f"Response: {response_text[:500]}...")  # Show more of the response for debugging
+            print(f"Response: {response_text}")  # Show more of the response for debugging
             print(f"--- End of received response from AWS Bedrock ---")
 
             # Check if the response contains tool calls
             if "<tool_call>" in response_text and "</tool_call>" in response_text:
                 # Extract tool call information
-                import re
                 tool_call_matches = re.findall(
                     r'<tool_call>(.*?)</tool_call>', 
                     response_text, 
@@ -313,6 +316,9 @@ def invoke_llm_manually(
                             print(f"Failed to parse tool args: {tool_args_match.group(1)}")
                 
                 if tool_calls:
+                    # print("Tool calls detected!")
+                    # print(tool_calls)
+                    # input("Continue?")
                     # Create an AIMessage with tool calls
                     return AIMessage(
                         content=response_text,

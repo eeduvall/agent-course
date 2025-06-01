@@ -47,7 +47,7 @@ def transcribe_audio_from_binary(file_content):
         return {"transcription": " ".join(results)}
 
 transcribe_audio_tool = Tool(
-    name="Transcribe Audio",
+    name="transcribe_audio",
     func=transcribe_audio_from_task,
     description="Transcribe text from an audio file. Provide the task_id to analyze the audio. Do NOT use the file_downloader tool before this one.",
 )
