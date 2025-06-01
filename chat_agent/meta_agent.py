@@ -21,6 +21,7 @@ def get_bedrock_client(region_name="us-east-2",
     """
     Create and return a boto3 Bedrock client with the specified configuration.
     """
+    config = Config(read_timeout=3600)
     # If credentials are provided, use them directly
     if aws_access_key_id and aws_secret_access_key:
         return boto3.client(
@@ -28,14 +29,16 @@ def get_bedrock_client(region_name="us-east-2",
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_session_token=aws_session_token,
-            region_name=region_name
+            region_name=region_name,
+            config=config
         )
     
     # Otherwise, use the default credentials from the environment or config
     config = Config(
         region_name=region_name,
         signature_version="v4",
-        retries={"max_attempts": 3, "mode": "standard"}
+        retries={"max_attempts": 3, "mode": "standard"},
+        read_timeout=3600
     )
     
     session = boto3.Session()
@@ -45,10 +48,10 @@ def get_bedrock_client(region_name="us-east-2",
 def invoke_bedrock_directly(client,
                 model_id,
                 messages,
-                temperature=0.2,
+                temperature=0.3,
                 max_tokens=5000,
                 tools=None,
-                timeout=30,
+                # timeout=3600,
                 max_retries=2,
                 max_tool_result_length=8000):
     """
@@ -168,16 +171,15 @@ def invoke_bedrock_directly(client,
     attempts = 0
     last_error = None
 
-    # Configure the client with timeout
-    client_config = client._client_config
-    if hasattr(client_config, 'connect_timeout'):
-        original_timeout = client_config.connect_timeout
-        client_config.connect_timeout = timeout
+    # # Configure the client with timeout
+    # client_config = client._client_config
+    # if hasattr(client_config, 'connect_timeout'):
+    #     original_timeout = client_config.connect_timeout
+    #     client_config.connect_timeout = timeout
     
     while not success and attempts < max_retries:
         try:
             print(f"Bedrock API call attempt {attempts+1}/{max_retries}")
-            # Make the API call with timeout configuration
             response = client.invoke_model(
                 modelId=model_id,
                 body=body
@@ -210,9 +212,9 @@ def invoke_bedrock_directly(client,
                 import time
                 time.sleep(sleep_time)
     
-    # Restore original timeout if we modified it
-    if hasattr(client_config, 'connect_timeout'):
-        client_config.connect_timeout = original_timeout
+    # # Restore original timeout if we modified it
+    # if hasattr(client_config, 'connect_timeout'):
+    #     client_config.connect_timeout = original_timeout
     
     if not success:
         if last_error:
@@ -236,7 +238,7 @@ def invoke_llm_manually(
     api_base_url: str = None,  # Not used with Bedrock, kept for compatibility
     model_name: str = "us.meta.llama3-1-405b-instruct-v1:0",
     auth_headers: Dict[str, str] = None,  # Not used with Bedrock, kept for compatibility
-    temperature: float = 0.2,
+    temperature: float = 0.3,
     max_tokens: int = 5000,
     region_name: str = "us-east-2",
     aws_access_key_id: Optional[str] = None,
@@ -273,7 +275,7 @@ def invoke_llm_manually(
                 temperature=temperature,
                 max_tokens=max_tokens,
                 tools=tools,
-                timeout=60,
+                # timeout=60,
                 max_retries=3,
                 max_tool_result_length=8000
             )

@@ -18,7 +18,7 @@ def transcribe_audio_from_task(task_id):
         if file_extension != 'mp3':
             return f"Error: File is not an MP3 audio file. File type: {file_extension}"
         
-        return transcribe_audio_from_file(file_content)
+        return transcribe_audio_from_binary(file_content)
         
     except Exception as e:
         return f"Error transcribing audio: {str(e)}"

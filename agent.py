@@ -47,7 +47,17 @@ class BasicAgent:
                      "If you are asked for a comma-separated list, apply the above rules depending on whether the element to be put in the list is a number or a string. " \
                      "IMPORTANT: When using the file_downloader tool, you MUST use the task_id that is provided in the question. DO NOT make up or guess a task_id. " \
                      "Do NOT use the file_downloader tool for large return types such as images, audio, or video. " \
-                     "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is unknown.")
+                     "When using a search tool like DuckDuckGo, evaluate the returned results carefully. " \
+                     "If the data is relevant, extract and synthesize the most useful information before determining the final answer. " \
+                     "After retrieving search results, cross-check the information across multiple sources. " \
+                     "If answers are consistent, use the most reliable source available. " \
+                     "If results vary, prioritize reputable or authoritative sources. " \
+                     "If a search query returns no relevant results, adjust the keywords and attempt a refined search. " \
+                     "Prioritize alternative phrasing or removing overly specific details to improve results. " \
+                     "Before determining the final answer, ensure that extracted data directly answers the question, avoiding assumptions. " \
+                     "Only respond with 'unknown' if the results contain no relevant information or are highly contradictory. " \
+                     "If partial information is available, formulate the most reasonable response based on the given data.")
+                    #  "Do NOT make up an answer you have insufficient information for. Instead, report that the answer is unknown.")
                      
                     #  "When a question mentions any file or external resource, always use the file_downloader tool first before using other specialized tools. " \
 
@@ -58,7 +68,7 @@ class BasicAgent:
     def __call__(self, question: str, task_id: str, file_name: str = '') -> dict:
         # print(f"Agent received question: {question}")
 
-        if file_name is not '':
+        if file_name != '':
             print(f"File is present '{file_name}'")
             self.tools = [self.search_tool, file_downloader_tool, board_to_fen_tool, transcribe_audio_tool, youtube_tool]
         else:
@@ -79,7 +89,7 @@ class BasicAgent:
                 messages=state["messages"],
                 tools=self.tools,
                 model_name=LLAMA_MODEL_ID,
-                temperature=0.2,
+                temperature=0.3,
                 max_tokens=5000,
                 region_name=AWS_REGION,
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
